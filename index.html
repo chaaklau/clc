@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLC Error Code Visualizer</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --border: #dee2e6;
+    --text: #212529;
+    --muted: #6c757d;
+    --accent: #4361ee;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: .25rem;
+    color: var(--accent);
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: .85rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Input area */
+  .input-area {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .input-area label {
+    display: block;
+    font-weight: 600;
+    font-size: .85rem;
+    margin-bottom: .5rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 120px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: .75rem;
+    font-family: 'Menlo', 'Consolas', monospace;
+    font-size: .85rem;
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, .15);
+  }
+
+  .btn-row {
+    display: flex;
+    gap: .5rem;
+    margin-top: .75rem;
+    flex-wrap: wrap;
+  }
+
+  button {
+    padding: .5rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card);
+    cursor: pointer;
+    font-size: .82rem;
+    font-weight: 500;
+    transition: all .15s;
+  }
+
+  button:hover { background: #f0f0f0; }
+
+  button.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  button.primary:hover { background: #3651d4; }
+
+  /* Filters */
+  .filters-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .filters-panel h3 {
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--muted);
+    margin-bottom: .6rem;
+  }
+
+  .filter-groups {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  .filter-group h4 {
+    font-size: .75rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: .35rem;
+  }
+
+  .filter-group .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    padding: .2rem .55rem;
+    border-radius: 4px;
+    font-size: .72rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--card);
+    user-select: none;
+    transition: all .12s;
+  }
+
+  .chip input { display: none; }
+
+  .chip.active {
+    border-color: var(--accent);
+    background: rgba(67, 97, 238, .08);
+    color: var(--accent);
+  }
+
+  .chip:hover { background: #f0f0f0; }
+  .chip.active:hover { background: rgba(67, 97, 238, .14); }
+
+  /* Output area */
+  .output-area {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    min-height: 100px;
+  }
+
+  .output-area h3 {
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--muted);
+    margin-bottom: .85rem;
+  }
+
+  #output {
+    font-size: 1.05rem;
+    line-height: 2;
+    word-wrap: break-word;
+  }
+
+  .plain-text { /* normal text, no styling needed */ }
+
+  /* Error annotation wrapper */
+  .err-annotation {
+    display: inline;
+    position: relative;
+    margin: 0 1px;
+  }
+
+  .err-wrong {
+    text-decoration: line-through;
+    text-decoration-color: #dc3545;
+    opacity: .55;
+    font-style: italic;
+    color: #dc3545;
+  }
+
+  .err-correction {
+    font-weight: 600;
+    border-radius: 3px;
+    padding: 1px 4px;
+    margin-left: 2px;
+  }
+
+  .err-label {
+    font-size: .6rem;
+    font-weight: 700;
+    vertical-align: super;
+    margin-left: 2px;
+    cursor: help;
+    border-radius: 3px;
+    padding: 0 3px;
+    opacity: .85;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+  }
+
+  /* Tooltip on hover — using title attr for simplicity */
+
+  /* Category colors */
+  .cat-form .err-correction        { background: #dbeafe; color: #1e40af; }
+  .cat-form .err-label             { background: #bfdbfe; color: #1e40af; }
+
+  .cat-missing .err-correction     { background: #d1fae5; color: #065f46; }
+  .cat-missing .err-label          { background: #a7f3d0; color: #065f46; }
+
+  .cat-replace .err-correction     { background: #fef3c7; color: #92400e; }
+  .cat-replace .err-label          { background: #fde68a; color: #92400e; }
+
+  .cat-unnecessary .err-correction { background: #fce7f3; color: #9d174d; }
+  .cat-unnecessary .err-label      { background: #fbcfe8; color: #9d174d; }
+
+  .cat-derived .err-correction     { background: #ede9fe; color: #5b21b6; }
+  .cat-derived .err-label          { background: #ddd6fe; color: #5b21b6; }
+
+  .cat-spelling .err-correction    { background: #fee2e2; color: #991b1b; }
+  .cat-spelling .err-label         { background: #fecaca; color: #991b1b; }
+
+  .cat-agreement .err-correction   { background: #ccfbf1; color: #134e4a; }
+  .cat-agreement .err-label        { background: #99f6e4; color: #134e4a; }
+
+  .cat-count .err-correction       { background: #e0e7ff; color: #3730a3; }
+  .cat-count .err-label            { background: #c7d2fe; color: #3730a3; }
+
+  .cat-falsefriend .err-correction { background: #fff7ed; color: #9a3412; }
+  .cat-falsefriend .err-label      { background: #fed7aa; color: #9a3412; }
+
+  .cat-punct .err-correction       { background: #f3f4f6; color: #374151; }
+  .cat-punct .err-label            { background: #e5e7eb; color: #374151; }
+
+  .cat-other .err-correction       { background: #f5f3ff; color: #6d28d9; }
+  .cat-other .err-label            { background: #ede9fe; color: #6d28d9; }
+
+  /* Hidden annotations when filtered out */
+  .err-annotation.hidden-error .err-wrong,
+  .err-annotation.hidden-error .err-label { display: none; }
+  .err-annotation.hidden-error .err-correction {
+    background: transparent !important;
+    font-weight: normal;
+    padding: 0;
+    color: inherit;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    font-size: .75rem;
+  }
+
+  .stat-badge {
+    padding: .2rem .55rem;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+
+  /* Legend */
+  .legend {
+    margin-top: 1.25rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+  }
+
+  .legend h3 {
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--muted);
+    margin-bottom: .5rem;
+  }
+
+  .legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: .25rem .75rem;
+    font-size: .75rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .15rem 0;
+  }
+
+  .legend-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .legend-code {
+    font-weight: 700;
+    font-family: 'Menlo', monospace;
+    min-width: 32px;
+  }
+
+  /* View toggle */
+  .view-toggle {
+    display: flex;
+    gap: .25rem;
+    margin-left: auto;
+  }
+
+  .view-toggle button {
+    padding: .35rem .7rem;
+    font-size: .75rem;
+  }
+
+  .view-toggle button.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 1rem; }
+    .filter-groups { flex-direction: column; gap: .75rem; }
+  }
+</style>
+</head>
+<body>
+
+<h1>CLC Error Code Visualizer</h1>
+<p class="subtitle">Cambridge Learner Corpus — colour-coded error annotation viewer</p>
+
+<div class="input-area">
+  <label for="input">Paste CLC-annotated text</label>
+  <textarea id="input" spellcheck="false" placeholder="e.g.  I would like to <#RV>said|say</#RV> that the <#S>accomodation|accommodation</#S> was <#RJ>good|excellent</#RJ>."></textarea>
+  <div class="btn-row">
+    <button class="primary" onclick="render()">Visualize</button>
+    <button onclick="loadSample()">Load Sample</button>
+    <button onclick="clearAll()">Clear</button>
+    <div class="view-toggle">
+      <button id="btn-annotated" class="active" onclick="setView('annotated')">Annotated</button>
+      <button id="btn-corrected" onclick="setView('corrected')">Corrected Only</button>
+      <button id="btn-original" onclick="setView('original')">Original Only</button>
+    </div>
+  </div>
+</div>
+
+<div class="filters-panel">
+  <h3>Filters</h3>
+  <div class="filter-groups" id="filterGroups"></div>
+</div>
+
+<div class="output-area">
+  <h3>Output</h3>
+  <div id="output"><span style="color:var(--muted)">Paste annotated text above and click <b>Visualize</b>.</span></div>
+  <div class="stats-bar" id="statsBar"></div>
+</div>
+
+<div class="legend">
+  <h3>Error Code Reference</h3>
+  <div class="legend-grid" id="legendGrid"></div>
+</div>
+
+<script>
+// ── CLC Code definitions ──────────────────────────────────────
+const ERROR_TYPES = {
+  F: { label: 'Wrong Form', cat: 'form' },
+  M: { label: 'Missing', cat: 'missing' },
+  R: { label: 'Replace', cat: 'replace' },
+  U: { label: 'Unnecessary', cat: 'unnecessary' },
+  D: { label: 'Wrong Derivation', cat: 'derived' },
+};
+
+const WORD_CLASSES = {
+  A: 'Pronoun (Anaphoric)',
+  C: 'Conjunction',
+  D: 'Determiner',
+  J: 'Adjective',
+  N: 'Noun',
+  Q: 'Quantifier',
+  T: 'Preposition',
+  V: 'Verb',
+  Y: 'Adverb',
+  P: 'Punctuation',
+};
+
+const CODES = {
+  // Form errors
+  FA: { short: 'FA', full: 'Wrong Form — Pronoun', cat: 'form', group: 'form' },
+  FC: { short: 'FC', full: 'Wrong Form — Conjunction', cat: 'form', group: 'form' },
+  FD: { short: 'FD', full: 'Wrong Form — Determiner', cat: 'form', group: 'form' },
+  FJ: { short: 'FJ', full: 'Wrong Form — Adjective', cat: 'form', group: 'form' },
+  FN: { short: 'FN', full: 'Wrong Form — Noun', cat: 'form', group: 'form' },
+  FQ: { short: 'FQ', full: 'Wrong Form — Quantifier', cat: 'form', group: 'form' },
+  FT: { short: 'FT', full: 'Wrong Form — Preposition', cat: 'form', group: 'form' },
+  FV: { short: 'FV', full: 'Wrong Form — Verb', cat: 'form', group: 'form' },
+  FY: { short: 'FY', full: 'Wrong Form — Adverb', cat: 'form', group: 'form' },
+
+  // Missing errors
+  M:  { short: 'M',  full: 'Missing (unspecified)', cat: 'missing', group: 'missing' },
+  MA: { short: 'MA', full: 'Missing Pronoun', cat: 'missing', group: 'missing' },
+  MC: { short: 'MC', full: 'Missing Conjunction', cat: 'missing', group: 'missing' },
+  MD: { short: 'MD', full: 'Missing Determiner', cat: 'missing', group: 'missing' },
+  MJ: { short: 'MJ', full: 'Missing Adjective', cat: 'missing', group: 'missing' },
+  MN: { short: 'MN', full: 'Missing Noun', cat: 'missing', group: 'missing' },
+  MQ: { short: 'MQ', full: 'Missing Quantifier', cat: 'missing', group: 'missing' },
+  MT: { short: 'MT', full: 'Missing Preposition', cat: 'missing', group: 'missing' },
+  MV: { short: 'MV', full: 'Missing Verb', cat: 'missing', group: 'missing' },
+  MY: { short: 'MY', full: 'Missing Adverb', cat: 'missing', group: 'missing' },
+  MP: { short: 'MP', full: 'Missing Punctuation', cat: 'punct', group: 'punct' },
+
+  // Replace errors
+  R:  { short: 'R',  full: 'Replace (unspecified)', cat: 'replace', group: 'replace' },
+  RA: { short: 'RA', full: 'Replace Pronoun', cat: 'replace', group: 'replace' },
+  RC: { short: 'RC', full: 'Replace Conjunction', cat: 'replace', group: 'replace' },
+  RD: { short: 'RD', full: 'Replace Determiner', cat: 'replace', group: 'replace' },
+  RJ: { short: 'RJ', full: 'Replace Adjective', cat: 'replace', group: 'replace' },
+  RN: { short: 'RN', full: 'Replace Noun', cat: 'replace', group: 'replace' },
+  RQ: { short: 'RQ', full: 'Replace Quantifier', cat: 'replace', group: 'replace' },
+  RT: { short: 'RT', full: 'Replace Preposition', cat: 'replace', group: 'replace' },
+  RV: { short: 'RV', full: 'Replace Verb', cat: 'replace', group: 'replace' },
+  RY: { short: 'RY', full: 'Replace Adverb', cat: 'replace', group: 'replace' },
+  RP: { short: 'RP', full: 'Replace Punctuation', cat: 'punct', group: 'punct' },
+
+  // Unnecessary errors
+  U:  { short: 'U',  full: 'Unnecessary (unspecified)', cat: 'unnecessary', group: 'unnecessary' },
+  UA: { short: 'UA', full: 'Unnecessary Pronoun', cat: 'unnecessary', group: 'unnecessary' },
+  UC: { short: 'UC', full: 'Unnecessary Conjunction', cat: 'unnecessary', group: 'unnecessary' },
+  UD: { short: 'UD', full: 'Unnecessary Determiner', cat: 'unnecessary', group: 'unnecessary' },
+  UJ: { short: 'UJ', full: 'Unnecessary Adjective', cat: 'unnecessary', group: 'unnecessary' },
+  UN: { short: 'UN', full: 'Unnecessary Noun', cat: 'unnecessary', group: 'unnecessary' },
+  UQ: { short: 'UQ', full: 'Unnecessary Quantifier', cat: 'unnecessary', group: 'unnecessary' },
+  UT: { short: 'UT', full: 'Unnecessary Preposition', cat: 'unnecessary', group: 'unnecessary' },
+  UV: { short: 'UV', full: 'Unnecessary Verb', cat: 'unnecessary', group: 'unnecessary' },
+  UY: { short: 'UY', full: 'Unnecessary Adverb', cat: 'unnecessary', group: 'unnecessary' },
+  UP: { short: 'UP', full: 'Unnecessary Punctuation', cat: 'punct', group: 'punct' },
+
+  // Derivation errors
+  DA: { short: 'DA', full: 'Wrong Derivation — Pronoun', cat: 'derived', group: 'derived' },
+  DC: { short: 'DC', full: 'Wrong Derivation — Conjunction', cat: 'derived', group: 'derived' },
+  DD: { short: 'DD', full: 'Wrong Derivation — Determiner', cat: 'derived', group: 'derived' },
+  DJ: { short: 'DJ', full: 'Wrong Derivation — Adjective', cat: 'derived', group: 'derived' },
+  DN: { short: 'DN', full: 'Wrong Derivation — Noun', cat: 'derived', group: 'derived' },
+  DQ: { short: 'DQ', full: 'Wrong Derivation — Quantifier', cat: 'derived', group: 'derived' },
+  DT: { short: 'DT', full: 'Wrong Derivation — Preposition', cat: 'derived', group: 'derived' },
+  DV: { short: 'DV', full: 'Wrong Derivation — Verb', cat: 'derived', group: 'derived' },
+  DY: { short: 'DY', full: 'Wrong Derivation — Adverb', cat: 'derived', group: 'derived' },
+
+  // Countability errors
+  CN: { short: 'CN', full: 'Countability of Noun', cat: 'count', group: 'count' },
+  CQ: { short: 'CQ', full: 'Wrong Quantifier (noun countability)', cat: 'count', group: 'count' },
+  CD: { short: 'CD', full: 'Wrong Determiner (noun countability)', cat: 'count', group: 'count' },
+
+  // Agreement errors
+  AGA: { short: 'AGA', full: 'Pronoun Agreement Error', cat: 'agreement', group: 'agreement' },
+  AGD: { short: 'AGD', full: 'Determiner Agreement Error', cat: 'agreement', group: 'agreement' },
+  AGN: { short: 'AGN', full: 'Noun Agreement Error', cat: 'agreement', group: 'agreement' },
+  AGV: { short: 'AGV', full: 'Verb Agreement Error', cat: 'agreement', group: 'agreement' },
+
+  // False friend errors
+  FFA: { short: 'FFA', full: 'False Friend — Pronoun', cat: 'falsefriend', group: 'falsefriend' },
+  FFC: { short: 'FFC', full: 'False Friend — Conjunction', cat: 'falsefriend', group: 'falsefriend' },
+  FFD: { short: 'FFD', full: 'False Friend — Determiner', cat: 'falsefriend', group: 'falsefriend' },
+  FFJ: { short: 'FFJ', full: 'False Friend — Adjective', cat: 'falsefriend', group: 'falsefriend' },
+  FFN: { short: 'FFN', full: 'False Friend — Noun', cat: 'falsefriend', group: 'falsefriend' },
+  FFQ: { short: 'FFQ', full: 'False Friend — Quantifier', cat: 'falsefriend', group: 'falsefriend' },
+  FFT: { short: 'FFT', full: 'False Friend — Preposition', cat: 'falsefriend', group: 'falsefriend' },
+  FFV: { short: 'FFV', full: 'False Friend — Verb', cat: 'falsefriend', group: 'falsefriend' },
+  FFY: { short: 'FFY', full: 'False Friend — Adverb', cat: 'falsefriend', group: 'falsefriend' },
+  FF:  { short: 'FF', full: 'False Friend (unspecified)', cat: 'falsefriend', group: 'falsefriend' },
+
+  // Additional codes
+  AS:   { short: 'AS',   full: 'Incorrect Argument Structure', cat: 'other', group: 'other' },
+  CE:   { short: 'CE',   full: 'Compound Error', cat: 'other', group: 'other' },
+  CL:   { short: 'CL',   full: 'Collocation Error', cat: 'other', group: 'other' },
+  ID:   { short: 'ID',   full: 'Idiom Error', cat: 'other', group: 'other' },
+  IN:   { short: 'IN',   full: 'Incorrect Noun Plural Formation', cat: 'other', group: 'other' },
+  IV:   { short: 'IV',   full: 'Incorrect Verb Inflection', cat: 'other', group: 'other' },
+  L:    { short: 'L',    full: 'Inappropriate Register (Label)', cat: 'other', group: 'other' },
+  S:    { short: 'S',    full: 'Spelling Error', cat: 'spelling', group: 'spelling' },
+  SA:   { short: 'SA',   full: 'American Spelling', cat: 'spelling', group: 'spelling' },
+  SX:   { short: 'SX',   full: 'Spelling Confusion (e.g. their/there)', cat: 'spelling', group: 'spelling' },
+  SPELL:{ short: 'SPELL',full: 'General Spelling (group code)', cat: 'spelling', group: 'spelling' },
+  TV:   { short: 'TV',   full: 'Wrong Tense of Verb', cat: 'other', group: 'other' },
+  W:    { short: 'W',    full: 'Incorrect Word Order', cat: 'other', group: 'other' },
+  X:    { short: 'X',    full: 'Incorrect Negative Formation', cat: 'other', group: 'other' },
+};
+
+const CAT_META = {
+  form:        { label: 'Form (F_)',        color: '#bfdbfe' },
+  missing:     { label: 'Missing (M_)',     color: '#a7f3d0' },
+  replace:     { label: 'Replace (R_)',     color: '#fde68a' },
+  unnecessary: { label: 'Unnecessary (U_)', color: '#fbcfe8' },
+  derived:     { label: 'Derivation (D_)',  color: '#ddd6fe' },
+  spelling:    { label: 'Spelling (S/SA/SX)', color: '#fecaca' },
+  agreement:   { label: 'Agreement (AG_)', color: '#99f6e4' },
+  count:       { label: 'Countability (C_)', color: '#c7d2fe' },
+  falsefriend: { label: 'False Friend (FF_)', color: '#fed7aa' },
+  punct:       { label: 'Punctuation (_P)', color: '#e5e7eb' },
+  other:       { label: 'Other (AS/CE/CL…)', color: '#ede9fe' },
+};
+
+const FILTER_GROUPS = {
+  'Error Type': ['form', 'missing', 'replace', 'unnecessary', 'derived'],
+  'Special': ['spelling', 'agreement', 'count', 'falsefriend', 'punct', 'other'],
+};
+
+// ── State ──────────────────────────────────────────────────────
+let activeFilters = new Set(Object.keys(CAT_META));
+let currentView = 'annotated'; // annotated | corrected | original
+let parsedTokens = [];
+
+// ── Parse CLC string ──────────────────────────────────────────
+function parseCLC(input) {
+  const tokens = [];
+  // Match outermost error tags (handles nesting by greedy inner capture)
+  // Pattern: <#CODE>wrong|correction</#CODE>
+  const tagRe = /<#(\w+)>([\s\S]*?)<\/#\1>/g;
+  let lastIdx = 0;
+  let match;
+
+  // Flatten: first pass finds top-level tags only
+  // We need a recursive approach for nested tags
+  function parseSegment(segment) {
+    const result = [];
+    const re = /<#(\w+)>([\s\S]*?)<\/#\1>/g;
+    let idx = 0;
+    let m;
+
+    while ((m = re.exec(segment)) !== null) {
+      // Text before this tag
+      if (m.index > idx) {
+        result.push({ type: 'text', value: segment.slice(idx, m.index) });
+      }
+
+      const code = m[1];
+      const inner = m[2];
+      const pipeIdx = findOuterPipe(inner);
+
+      let wrong = '', corrected = '';
+      if (pipeIdx >= 0) {
+        wrong = inner.slice(0, pipeIdx);
+        corrected = inner.slice(pipeIdx + 1);
+      } else {
+        wrong = inner;
+        corrected = inner;
+      }
+
+      // Strip nested tags from wrong/corrected for display
+      const wrongClean = stripTags(wrong);
+      const correctedClean = stripTags(corrected);
+
+      // Check for nested errors within wrong or corrected
+      const nestedWrong = parseSegment(wrong);
+      const nestedCorrected = parseSegment(corrected);
+
+      const codeDef = CODES[code] || { short: code, full: code, cat: 'other', group: 'other' };
+
+      result.push({
+        type: 'error',
+        code,
+        codeDef,
+        wrong: wrongClean,
+        corrected: correctedClean,
+        nestedWrong,
+        nestedCorrected,
+        rawWrong: wrong,
+        rawCorrected: corrected,
+      });
+
+      idx = m.index + m[0].length;
+    }
+
+    if (idx < segment.length) {
+      result.push({ type: 'text', value: segment.slice(idx) });
+    }
+
+    return result;
+  }
+
+  return parseSegment(input);
+}
+
+// Find pipe that is not inside a tag
+function findOuterPipe(s) {
+  let depth = 0;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === '<' && s[i + 1] === '#') {
+      depth++;
+    } else if (s[i] === '<' && s[i + 1] === '/' && s[i + 2] === '#') {
+      depth--;
+    } else if (s[i] === '|' && depth === 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function stripTags(s) {
+  return s.replace(/<\/?#\w+>/g, '');
+}
+
+// ── Render ─────────────────────────────────────────────────────
+function render() {
+  const input = document.getElementById('input').value.trim();
+  if (!input) return;
+
+  parsedTokens = parseCLC(input);
+  renderOutput();
+}
+
+function renderOutput() {
+  const output = document.getElementById('output');
+  output.innerHTML = '';
+
+  const frag = document.createDocumentFragment();
+  renderTokens(parsedTokens, frag);
+  output.appendChild(frag);
+
+  renderStats();
+}
+
+function renderTokens(tokens, parent) {
+  tokens.forEach(token => {
+    if (token.type === 'text') {
+      parent.appendChild(document.createTextNode(token.value));
+    } else {
+      const cat = token.codeDef.cat;
+      const visible = activeFilters.has(cat);
+
+      const wrapper = document.createElement('span');
+      wrapper.className = `err-annotation cat-${cat}${visible ? '' : ' hidden-error'}`;
+      wrapper.dataset.code = token.code;
+      wrapper.dataset.cat = cat;
+
+      if (currentView === 'annotated') {
+        // Wrong part (strikethrough)
+        if (token.wrong) {
+          const wrongEl = document.createElement('span');
+          wrongEl.className = 'err-wrong';
+          wrongEl.textContent = token.wrong;
+          wrapper.appendChild(wrongEl);
+        }
+
+        // Correction
+        if (token.corrected) {
+          const corrEl = document.createElement('span');
+          corrEl.className = 'err-correction';
+          corrEl.textContent = token.corrected;
+          wrapper.appendChild(corrEl);
+        }
+
+        // Label
+        const labelEl = document.createElement('span');
+        labelEl.className = 'err-label';
+        labelEl.textContent = token.codeDef.short;
+        labelEl.title = token.codeDef.full;
+        wrapper.appendChild(labelEl);
+
+      } else if (currentView === 'corrected') {
+        wrapper.appendChild(document.createTextNode(token.corrected || ''));
+      } else {
+        // original
+        wrapper.appendChild(document.createTextNode(token.wrong || ''));
+      }
+
+      parent.appendChild(wrapper);
+    }
+  });
+}
+
+function renderStats() {
+  const bar = document.getElementById('statsBar');
+  const counts = {};
+  countErrors(parsedTokens, counts);
+
+  bar.innerHTML = '';
+
+  if (Object.keys(counts).length === 0) {
+    bar.innerHTML = '<span style="color:var(--muted)">No errors found.</span>';
+    return;
+  }
+
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  const totalBadge = document.createElement('span');
+  totalBadge.className = 'stat-badge';
+  totalBadge.style.background = '#e5e7eb';
+  totalBadge.textContent = `Total: ${total}`;
+  bar.appendChild(totalBadge);
+
+  // Group by category
+  const catCounts = {};
+  for (const [code, count] of Object.entries(counts)) {
+    const def = CODES[code] || { cat: 'other' };
+    catCounts[def.cat] = (catCounts[def.cat] || 0) + count;
+  }
+
+  for (const [cat, count] of Object.entries(catCounts).sort((a, b) => b[1] - a[1])) {
+    const badge = document.createElement('span');
+    badge.className = 'stat-badge';
+    badge.style.background = CAT_META[cat]?.color || '#e5e7eb';
+    badge.textContent = `${CAT_META[cat]?.label || cat}: ${count}`;
+    bar.appendChild(badge);
+  }
+}
+
+function countErrors(tokens, counts) {
+  tokens.forEach(t => {
+    if (t.type === 'error') {
+      counts[t.code] = (counts[t.code] || 0) + 1;
+      if (t.nestedWrong) countErrors(t.nestedWrong, counts);
+      if (t.nestedCorrected) countErrors(t.nestedCorrected, counts);
+    }
+  });
+}
+
+// ── Filters ────────────────────────────────────────────────────
+function buildFilters() {
+  const container = document.getElementById('filterGroups');
+  container.innerHTML = '';
+
+  // All/None buttons
+  const ctrlGroup = document.createElement('div');
+  ctrlGroup.className = 'filter-group';
+  ctrlGroup.innerHTML = `<h4>Quick</h4><div class="chips">
+    <span class="chip active" onclick="toggleAll(true)">All On</span>
+    <span class="chip" onclick="toggleAll(false)">All Off</span>
+  </div>`;
+  container.appendChild(ctrlGroup);
+
+  for (const [groupName, cats] of Object.entries(FILTER_GROUPS)) {
+    const group = document.createElement('div');
+    group.className = 'filter-group';
+
+    const h4 = document.createElement('h4');
+    h4.textContent = groupName;
+    group.appendChild(h4);
+
+    const chips = document.createElement('div');
+    chips.className = 'chips';
+
+    cats.forEach(cat => {
+      const meta = CAT_META[cat];
+      const chip = document.createElement('span');
+      chip.className = `chip${activeFilters.has(cat) ? ' active' : ''}`;
+      chip.dataset.cat = cat;
+      chip.style.borderColor = activeFilters.has(cat) ? meta.color : '';
+      chip.style.background = activeFilters.has(cat) ? meta.color + '44' : '';
+      chip.innerHTML = `<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${meta.color}"></span> ${meta.label}`;
+      chip.onclick = () => toggleFilter(cat);
+      chips.appendChild(chip);
+    });
+
+    group.appendChild(chips);
+    container.appendChild(group);
+  }
+}
+
+function toggleFilter(cat) {
+  if (activeFilters.has(cat)) {
+    activeFilters.delete(cat);
+  } else {
+    activeFilters.add(cat);
+  }
+  buildFilters();
+  applyFilters();
+}
+
+function toggleAll(on) {
+  if (on) {
+    Object.keys(CAT_META).forEach(c => activeFilters.add(c));
+  } else {
+    activeFilters.clear();
+  }
+  buildFilters();
+  applyFilters();
+}
+
+function applyFilters() {
+  document.querySelectorAll('.err-annotation').forEach(el => {
+    const cat = el.dataset.cat;
+    if (activeFilters.has(cat)) {
+      el.classList.remove('hidden-error');
+    } else {
+      el.classList.add('hidden-error');
+    }
+  });
+}
+
+// ── View toggle ────────────────────────────────────────────────
+function setView(view) {
+  currentView = view;
+  document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-' + view).classList.add('active');
+  if (parsedTokens.length) renderOutput();
+}
+
+// ── Legend ──────────────────────────────────────────────────────
+function buildLegend() {
+  const grid = document.getElementById('legendGrid');
+  grid.innerHTML = '';
+
+  for (const [code, def] of Object.entries(CODES)) {
+    // Skip SPELL group code from legend
+    if (code === 'SPELL') continue;
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    const catColor = CAT_META[def.cat]?.color || '#e5e7eb';
+    item.innerHTML = `<span class="legend-swatch" style="background:${catColor}"></span>
+      <span class="legend-code">${code}</span>
+      <span>${def.full}</span>`;
+    grid.appendChild(item);
+  }
+}
+
+// ── Sample ─────────────────────────────────────────────────────
+function loadSample() {
+  document.getElementById('input').value =
+`I would like to <#RV>said|say</#RV> that the <#S>accomodation|accommodation</#S> was <#RJ>good|excellent</#RJ>. <#MD>|The</#MD> food was <#FJ>deliciously|delicious</#FJ> and <#UD>the|</#UD> staff were very <#RY>good|well</#RY> trained. However, I <#TV>will go|went</#TV> to the pool and <#MT>|it</#MT> was <#AGV>is|was</#AGV> too cold. <#MP>|,</#MP> Also <#UT>in|</#UT> my room <#S>definately|definitely</#S> needs <#RV><#S>reparing|repairing</#S>|to be repaired</#RV>. I think the <#CL>price cost|cost</#CL> was <#SX>to|too</#SX> high and the <#W>experience whole|whole experience</#W> was <#DJ>disappoint|disappointing</#DJ>.`;
+  render();
+}
+
+function clearAll() {
+  document.getElementById('input').value = '';
+  document.getElementById('output').innerHTML = '<span style="color:var(--muted)">Paste annotated text above and click <b>Visualize</b>.</span>';
+  document.getElementById('statsBar').innerHTML = '';
+  parsedTokens = [];
+}
+
+// ── Init ───────────────────────────────────────────────────────
+buildFilters();
+buildLegend();
+</script>
+</body>
+</html>

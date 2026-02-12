@@ -1,0 +1,105 @@
+3. The system of error codes
+Learner errors are tagged using the following convention:
+<#CODE>wrong word|corrected word</#CODE>
+The majority of the error codes are based on a two-letter coding system in which the first letter represents
+the general type of error (e.g. wrong form, omission), while the second letter identifies the word class of
+the required word.
+General types of error (first letter)
+F wrong Form used
+M something Missing
+R word or phrase needs Replacing
+U word or phrase is Unnecessary (i.e. redundant)
+D word is wrongly Derived
+The codes M, R, and U can occur alone where no more specific information can be given.
+Word classes (second letter)
+A Pronoun (Anaphoric)
+C Conjunction (linking word)
+D Determiner
+J AdJective
+N Noun
+Q Quantifier
+T Preposition
+V Verb (includes modals)
+Y Adverb (-lY)
+Punctuation errors (Error type + P)
+Punctuation errors are coded with P as the second letter, and one of the error types M, R, U as the first
+letter.
+MP punctuation Missing
+RP punctuation needs Replacing
+UP Unnecessary punctuation
+When punctuation errors are corrected by the coder, any change in capitalization is also shown within the
+error coding. For example, the sentence *He died we buried him the next day omits a full stop after he died
+and therefore requires the <#MP>|.</#MP> coding. However, the new sentence break requires the w of we
+to be capitalized. This is shown by the coding He died <#MP>we|.We</#MP> buried him the next day. This
+covers both the punctuation error and the required changes to the capitalization.
+Countability errors (C + word class)
+CN countability of Noun error
+CQ wrong Quantifier because of noun countability
+CD wrong Determiner because of noun countability
+CN means that the student has used a form which is not available in the intended sense of the noun (e.g.
+*the country’s natural beauties, *two transports). Where a noun could be either count or uncount but the
+wrong form has been used, the error is FN, wrong form of noun (e.g. vacation/vacations).
+False friend errors (FF + any word class)
+All false friend errors are tagged with FF. The word class of the required word is specified by adding a
+word class code (A, C, D, J, N, Q, T, V, Y) to the FF code. This code is only used when the coder is certain
+he/she is dealing with a documented False Friend. Otherwise, it is treated as a replace (R) error.
+Agreement errors (AG + word class)
+AGA Anaphoric (pronoun) agreement error
+AGD Determiner agreement error
+AGN Noun agreement error
+AGV Verb agreement error
+
+Additional error codes
+AS incorrect Argument Structure
+CE Compound Error
+CL CoLlocation error
+ID IDiom error
+IN Incorrect formation of Noun plural
+IV Incorrect Verb inflection
+L inappropriate register (Label)
+S Spelling error
+SA American Spelling
+SX Spelling confusion error
+TV wrong Tense of Verb
+W incorrect Word order
+X incorrect formation of negative
+AS (argument structure error) covers errors in argument structures which cannot be coded as MT (missing
+preposition, e.g. *he explained me) or UT (unnecessary preposition, e.g. *he told to me). AS is particularly
+used for double object verbs, e.g. *it caused trouble to me is coded <#AS>it caused trouble to me|it caused
+me trouble</#AS> to circumvent the need for multiple codes to correct what is, in fact, a single error.
+CE (complex error) is a catch-all code to cover multiple errors and groups of words the intended sense of
+which cannot be established. By using this code, we factor out of the equation strings which can yield little
+useful information on learner errors.
+SA (American Spelling) is not a true error code since it is not always possible to know whether a learner
+has made a mistake or is deliberately using US spelling, but was introduced in view of the fact that learners
+are usually very clear about which variety of English they wish to learn and ELT and dictionary publishers
+still need to highlight the differences between the varieties of English in their products. The SX code
+(spelling confusion error) covers spelling confusables such as to/too, their/there and weather/whether. It is
+possible to override the distinctions made by these codes by searching on the general-spelling group code
+<#SPELL>.
+4. Some practical issues
+4.1. Avoiding over-coding and 'creating' errors
+We are not attempting to rewrite the scripts into perfect English or to interpret the text. Often, things could
+be expressed better by paraphrase - this is not our task. We are only correcting and documenting errors.
+Equally, the coder must resist the temptation to make moral judgements about a student's intended
+meaning. If the language used is 'correct', the idea behind it is not brought into question.
+4.2. Embedding errors
+In cases where a word is both wrongly spelled and the wrong word, for example, one code can be
+embedded within another.
+e.g. I like to <#S>hospitelize|hospitalise</#S> my relatives - the student means ‘put them up’ or ‘have them
+to stay’ (show them hospitality). This should be an <#RV> error, not a spelling error and the spelling
+correction should be embedded inside the more significant RV code. Thus:
+<#RV><#S>hospitelize|hospitalise</#S>|put up</#RV>.
+4.3. Choosing error codes in ambiguous cases
+Coders are occasionally faced with a decision between two different codes. This is the case in, for example:
+*He said me that ... The coder must decide whether to correct this by replacing the verb (RV) with a
+synonym (told) which works in the given argument structure (He told me that), or to add the missing
+preposition (MT) to make the argument structure of the student’s chosen verb correct (He said to me that).
+We want to keep as close as possible to the student’s original text, so it is helpful to think of the
+error codes as having a loose hierarchy. In this case, changing a verb’s argument structure is a less severe
+change than changing the verb itself and puts right what the student said wrongly, rather than starting again
+from scratch. So, ‘He said <#MT>|to</#MT> me that’ is more helpful, than, ‘He <#RV>said|told</#RV>
+me that’. It is more helpful to teach students to use a verb correctly than to teach them to avoid using a verb
+which they use incorrectly. Similarly, where it is impossible to know what the student intended in a
+Replace error, no correct version is inserted, as a coder’s ‘wild guess’ can be of little help and will distort
+the data.
