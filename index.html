@@ -36,7 +36,13 @@
   .subtitle {
     color: var(--muted);
     font-size: .85rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  #btn-filter.filter-active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
   }
 
   /* Input area */
@@ -44,8 +50,8 @@
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 1.25rem;
-    margin-bottom: 1.25rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: .75rem;
   }
 
   .input-area label {
@@ -60,14 +66,15 @@
 
   textarea {
     width: 100%;
-    min-height: 120px;
+    min-height: 70px;
+    max-height: 200px;
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: .75rem;
+    padding: .6rem .75rem;
     font-family: 'Menlo', 'Consolas', monospace;
-    font-size: .85rem;
+    font-size: .82rem;
     resize: vertical;
-    line-height: 1.5;
+    line-height: 1.45;
   }
 
   textarea:focus {
@@ -109,8 +116,16 @@
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 1rem 1.25rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    max-height: 0;
+    padding: 0 1.25rem;
+    transition: max-height .25s ease, padding .25s ease;
+  }
+
+  .filters-panel.open {
+    max-height: 300px;
+    padding: .75rem 1.25rem;
   }
 
   .filters-panel h3 {
@@ -293,11 +308,11 @@
 
   /* Legend */
   .legend {
-    margin-top: 1.25rem;
+    margin-top: 1rem;
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 1rem 1.25rem;
+    padding: .75rem 1.25rem;
   }
 
   .legend h3 {
@@ -306,34 +321,63 @@
     text-transform: uppercase;
     letter-spacing: .03em;
     color: var(--muted);
-    margin-bottom: .5rem;
+    margin-bottom: .4rem;
   }
 
-  .legend-grid {
+  .legend-groups {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: .25rem .75rem;
-    font-size: .75rem;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: .3rem .75rem;
   }
 
-  .legend-item {
+  .legend-group {
+    border: none;
+    background: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .legend-group summary {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    color: var(--muted);
+    cursor: pointer;
+    padding: .2rem .4rem;
+    border-radius: 4px;
     display: flex;
     align-items: center;
-    gap: .4rem;
-    padding: .15rem 0;
+    gap: .35rem;
+    user-select: none;
   }
 
-  .legend-swatch {
-    width: 10px;
-    height: 10px;
+  .legend-group summary:hover { background: #f0f0f0; }
+  .legend-group[open] summary { margin-bottom: .15rem; }
+
+  .legend-group summary .lg-swatch {
+    width: 8px;
+    height: 8px;
     border-radius: 2px;
     flex-shrink: 0;
   }
 
-  .legend-code {
+  .legend-codes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .15rem .5rem;
+    padding-left: 1.4rem;
+    font-size: .7rem;
+    margin-bottom: .25rem;
+  }
+
+  .legend-codes span {
+    white-space: nowrap;
+  }
+
+  .lc-code {
     font-weight: 700;
     font-family: 'Menlo', monospace;
-    min-width: 32px;
   }
 
   /* View toggle */
@@ -372,6 +416,7 @@
     <button class="primary" onclick="render()">Visualize</button>
     <button onclick="loadSample()">Load Sample</button>
     <button onclick="clearAll()">Clear</button>
+    <button id="btn-filter" onclick="toggleFiltersPanel()">Filters ▾</button>
     <div class="view-toggle">
       <button id="btn-annotated" class="active" onclick="setView('annotated')">Annotated</button>
       <button id="btn-corrected" onclick="setView('corrected')">Corrected Only</button>
@@ -380,8 +425,7 @@
   </div>
 </div>
 
-<div class="filters-panel">
-  <h3>Filters</h3>
+<div class="filters-panel" id="filtersPanel">
   <div class="filter-groups" id="filterGroups"></div>
 </div>
 
@@ -393,7 +437,7 @@
 
 <div class="legend">
   <h3>Error Code Reference</h3>
-  <div class="legend-grid" id="legendGrid"></div>
+  <div class="legend-groups" id="legendGrid"></div>
 </div>
 
 <script>
@@ -832,19 +876,33 @@ function setView(view) {
 
 // ── Legend ──────────────────────────────────────────────────────
 function buildLegend() {
-  const grid = document.getElementById('legendGrid');
-  grid.innerHTML = '';
+  const container = document.getElementById('legendGrid');
+  container.innerHTML = '';
 
+  // Group codes by category
+  const groups = {};
   for (const [code, def] of Object.entries(CODES)) {
-    // Skip SPELL group code from legend
     if (code === 'SPELL') continue;
-    const item = document.createElement('div');
-    item.className = 'legend-item';
-    const catColor = CAT_META[def.cat]?.color || '#e5e7eb';
-    item.innerHTML = `<span class="legend-swatch" style="background:${catColor}"></span>
-      <span class="legend-code">${code}</span>
-      <span>${def.full}</span>`;
-    grid.appendChild(item);
+    const cat = def.cat;
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push({ code, ...def });
+  }
+
+  for (const [cat, codes] of Object.entries(groups)) {
+    const meta = CAT_META[cat];
+    const details = document.createElement('details');
+    details.className = 'legend-group';
+    const summary = document.createElement('summary');
+    summary.innerHTML = `<span class="lg-swatch" style="background:${meta?.color || '#e5e7eb'}"></span>${meta?.label || cat} <span style="font-weight:400;color:var(--muted)">(${codes.length})</span>`;
+    details.appendChild(summary);
+
+    const codesDiv = document.createElement('div');
+    codesDiv.className = 'legend-codes';
+    codes.forEach(c => {
+      codesDiv.innerHTML += `<span><span class="lc-code">${c.code}</span> ${c.full.replace(/^.*?—\s*/, '').replace(/^.*?\(/, '(') || c.full}</span>`;
+    });
+    details.appendChild(codesDiv);
+    container.appendChild(details);
   }
 }
 
@@ -860,6 +918,14 @@ function clearAll() {
   document.getElementById('output').innerHTML = '<span style="color:var(--muted)">Paste annotated text above and click <b>Visualize</b>.</span>';
   document.getElementById('statsBar').innerHTML = '';
   parsedTokens = [];
+}
+
+// ── Filters panel toggle ───────────────────────────────────────
+function toggleFiltersPanel() {
+  const panel = document.getElementById('filtersPanel');
+  const btn = document.getElementById('btn-filter');
+  panel.classList.toggle('open');
+  btn.classList.toggle('filter-active');
 }
 
 // ── Init ───────────────────────────────────────────────────────
